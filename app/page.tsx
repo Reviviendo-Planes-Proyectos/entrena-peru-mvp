@@ -32,7 +32,8 @@ import { useState, useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
 import { useAuth } from "@/hooks/useAuth"
-import { TrainerService, TrainerProfile } from "@/lib/services/trainers"    
+import { TrainerService, TrainerProfile } from "@/lib/services/trainers"
+import { TrainerProfileForm } from "@/components/TrainerProfileForm"
 
 export default function HomePage() {
   const { user, loginWithGoogle, logout } = useAuth()
@@ -40,6 +41,7 @@ export default function HomePage() {
   const [userType, setUserType] = useState<"client" | "trainer" | null>(null)
   const [showTrainerPanel, setShowTrainerPanel] = useState(false)
   const [showClientPanel, setShowClientPanel] = useState(false)
+  const [showTrainerProfileForm, setShowTrainerProfileForm] = useState(false)
   const [activeTrainerMenu, setActiveTrainerMenu] = useState<"profile" | "schedule" | "rates">("profile")
   const [favoriteTrainers, setFavoriteTrainers] = useState<number[]>([])
   const [rateType, setRateType] = useState<"weekly" | "monthly">("weekly")
@@ -179,18 +181,53 @@ export default function HomePage() {
     package10: 280,
   })
 
+  const SPECIALTY_OPTIONS = [
+    "PILATES",
+    "YOGA",
+    "ENTRENAMIENTO FUNCIONAL",
+    "CROSSFIT",
+    "ZUMBA",
+    "NATACIÓN",
+    "REHABILITACIÓN FÍSICA",
+    "ENTRENAMIENTO DE FUERZA",
+    "HIPERTROFIA",
+    "CARDIO",
+    "BAILE LATINO",
+    "STRETCHING",
+    "AQUA AERÓBICOS",
+    "POWERLIFTING",
+    "HIIT",
+    "OLYMPIC LIFTING",
+    "MOBILITY",
+    "ACSM CERTIFIED",
+    "NSCA CERTIFIED",
+    "CROSSFIT LEVEL 1",
+    "CROSSFIT LEVEL 2",
+    "YOGA ALLIANCE RYT 200",
+    "YOGA ALLIANCE RYT 500",
+    "BASI PILATES CERTIFIED",
+    "FUNCTIONAL TRAINER",
+    "NUTRITION COACH",
+    "NUTRICIÓN DEPORTIVA",
+    "FISIOTERAPIA",
+    "ENTRENADOR PERSONAL CERTIFICADO",
+    "CROSSFIT KIDS",
+    "TRX CERTIFIED",
+    "KETTLEBELL CERTIFIED"
+  ]
+
   const [trainerProfile, setTrainerProfile] = useState({
     alias: "Coach Carlos",
-    firstName: "Carlos",
-    lastName: "Mendoza",
+    name: "Carlos Mendoza",
     dni: "12345678",
     whatsapp: "+51987654321",
     address: "Av. Larco 123, Miraflores",
     location: "Lima, Perú",
-    categories: ["ACSM CERTIFIED", "FUNCTIONAL TRAINING", "KARATE"],
+    specialties: ["ACSM CERTIFIED", "FUNCTIONAL TRAINING", "KARATE"],
     bio: "Entrenador certificado con más de 8 años de experiencia en entrenamiento funcional y artes marciales.",
-    description: "Especialista en transformación física y bienestar integral",
-    profilePhoto: "",
+    generalDescription: "Especialista en transformación física y bienestar integral",
+    experience: "8 años",
+    profileImage: "",
     referencePhotos: ["", "", "", ""],
   })
 
@@ -231,10 +268,11 @@ export default function HomePage() {
       localStorage.setItem("userType", type)
       
       // Autenticar con Google y guardar en Firestore
-      await loginWithGoogle()
+      const result = await loginWithGoogle()
       
       setShowLoginModal(false)
       if (type === "trainer") {
+        // Siempre mostrar el Panel de Entrenador (ahora tiene funcionalidad completa)
         setShowTrainerPanel(true)
       }
     } catch (error) {
@@ -252,10 +290,16 @@ export default function HomePage() {
       localStorage.removeItem("userType")
       setShowTrainerPanel(false)
       setShowClientPanel(false)
+      setShowTrainerProfileForm(false)
       setFavoriteTrainers([])
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     }
+  }
+
+  const handleTrainerProfileComplete = () => {
+    setShowTrainerProfileForm(false)
+    setShowTrainerPanel(true)
   }
 
   useEffect(() => {
@@ -314,20 +358,57 @@ export default function HomePage() {
     }))
   }
 
-  const addCategory = (newCategory: string) => {
-    if (newCategory.trim() && !trainerProfile.categories.includes(newCategory.trim().toUpperCase())) {
+  const addSpecialty = (newSpecialty: string) => {
+    if (newSpecialty.trim() && !trainerProfile.specialties.includes(newSpecialty.trim())) {
       setTrainerProfile((prev) => ({
         ...prev,
-        categories: [...prev.categories, newCategory.trim().toUpperCase()],
+        specialties: [...prev.specialties, newSpecialty.trim()],
       }))
     }
   }
 
-  const removeCategory = (categoryToRemove: string) => {
+  const removeSpecialty = (specialtyToRemove: string) => {
     setTrainerProfile((prev) => ({
       ...prev,
-      categories: prev.categories.filter((cat) => cat !== categoryToRemove),
+      specialties: prev.specialties.filter((spec) => spec !== specialtyToRemove),
     }))
+  }
+
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
+
+  const saveTrainerProfile = async () => {
+    if (!user) return
+    
+    setIsSavingProfile(true)
+    setProfileSaveError(null)
+    
+    try {
+      const profileData = {
+        name: trainerProfile.name,
+        specialties: trainerProfile.specialties,
+        bio: trainerProfile.bio,
+        generalDescription: trainerProfile.generalDescription,
+        experience: trainerProfile.experience,
+        profileImage: trainerProfile.profileImage,
+        referencePhotos: trainerProfile.referencePhotos.filter(photo => photo.trim() !== ''),
+        whatsapp: trainerProfile.whatsapp,
+        address: trainerProfile.address,
+        location: trainerProfile.location,
+        dni: trainerProfile.dni,
+        alias: trainerProfile.alias,
+        isActive: true
+      }
+      
+      // Actualizar el documento existente en lugar de crear uno nuevo
+      await TrainerService.updateTrainer(user.uid, profileData)
+      alert('Perfil guardado exitosamente')
+    } catch (error) {
+      console.error('Error saving trainer profile:', error)
+      setProfileSaveError('Error al guardar el perfil. Por favor, intenta nuevamente.')
+    } finally {
+      setIsSavingProfile(false)
+    }
   }
 
   const categories = [
@@ -541,8 +622,8 @@ export default function HomePage() {
 
       {userType === "trainer" && showTrainerPanel && (
         <div className="fixed inset-0 z-50 flex">
-          {/* Sidebar Navigation */}
-          <div className="w-64 bg-white shadow-xl border-r">
+          {/* Sidebar Navigation - Hidden on mobile */}
+          <div className="w-64 bg-white shadow-xl border-r hidden md:block">
             <div className="p-4 border-b bg-blue-600 text-white">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-lg">Panel de Entrenador</h2>
@@ -596,19 +677,32 @@ export default function HomePage() {
 
           {/* Main Content Area */}
           <div className="flex-1 bg-gray-50 overflow-y-auto">
+            {/* Mobile close button */}
+            <div className="md:hidden p-4 bg-white border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Configurar Perfil</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTrainerPanel(false)}
+                className="text-gray-600 hover:bg-gray-100"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
             <div className="p-8">
               {activeTrainerMenu === "profile" && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Configurar Perfil</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 hidden md:block">Configurar Perfil</h3>
 
                   <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
                       <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                          {trainerProfile.profilePhoto ? (
+                        <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {trainerProfile.profileImage ? (
                             <img
-                              src={trainerProfile.profilePhoto || "/placeholder.svg"}
+                              src={trainerProfile.profileImage || "/placeholder.svg"}
                               alt="Profile"
                               className="w-full h-full rounded-full object-cover"
                             />
@@ -616,9 +710,29 @@ export default function HomePage() {
                             <User className="w-8 h-8 text-gray-400" />
                           )}
                         </div>
-                        <Button variant="outline" size="sm">
-                          Subir Foto
-                        </Button>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const reader = new FileReader()
+                                reader.onload = (event) => {
+                                  setTrainerProfile(prev => ({
+                                    ...prev,
+                                    profileImage: event.target?.result as string
+                                  }))
+                                }
+                                reader.readAsDataURL(file)
+                              }
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <Button variant="outline" size="sm">
+                            Subir Foto
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
@@ -634,11 +748,11 @@ export default function HomePage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nombres</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
                         <input
                           type="text"
-                          value={trainerProfile.firstName}
-                          onChange={(e) => updateTrainerProfile("firstName", e.target.value)}
+                          value={trainerProfile.name}
+                          onChange={(e) => updateTrainerProfile("name", e.target.value)}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -665,6 +779,20 @@ export default function HomePage() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Experiencia</label>
+                        <input
+                          type="text"
+                          value={trainerProfile.experience}
+                          onChange={(e) => updateTrainerProfile("experience", e.target.value)}
+                          placeholder="Ej: 5 años"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div></div>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
                       <input
@@ -687,14 +815,14 @@ export default function HomePage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Descripción General ({trainerProfile.description.length}/100)
+                        Descripción General ({trainerProfile.generalDescription.length}/100)
                       </label>
                       <input
                         type="text"
-                        value={trainerProfile.description}
+                        value={trainerProfile.generalDescription}
                         onChange={(e) => {
                           if (e.target.value.length <= 100) {
-                            updateTrainerProfile("description", e.target.value)
+                            updateTrainerProfile("generalDescription", e.target.value)
                           }
                         }}
                         maxLength={100}
@@ -722,20 +850,53 @@ export default function HomePage() {
                         {trainerProfile.referencePhotos.map((photo, index) => (
                           <div
                             key={index}
-                            className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center"
+                            className="relative aspect-square bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden"
                           >
                             {photo ? (
-                              <img
-                                src={photo || "/placeholder.svg"}
-                                alt={`Reference ${index + 1}`}
-                                className="w-full h-full rounded-lg object-cover"
-                              />
+                              <>
+                                <img
+                                  src={photo || "/placeholder.svg"}
+                                  alt={`Reference ${index + 1}`}
+                                  className="w-full h-full rounded-lg object-cover"
+                                />
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-1 right-1 w-6 h-6 p-0"
+                                  onClick={() => {
+                                    const newPhotos = [...trainerProfile.referencePhotos]
+                                    newPhotos[index] = ''
+                                    setTrainerProfile(prev => ({ ...prev, referencePhotos: newPhotos }))
+                                  }}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </>
                             ) : (
                               <div className="text-center">
                                 <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                <Button variant="outline" size="sm">
-                                  Subir
-                                </Button>
+                                <div className="relative">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0]
+                                      if (file) {
+                                        const reader = new FileReader()
+                                        reader.onload = (event) => {
+                                          const newPhotos = [...trainerProfile.referencePhotos]
+                                          newPhotos[index] = event.target?.result as string
+                                          setTrainerProfile(prev => ({ ...prev, referencePhotos: newPhotos }))
+                                        }
+                                        reader.readAsDataURL(file)
+                                      }
+                                    }}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  />
+                                  <Button variant="outline" size="sm">
+                                    Subir
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -743,18 +904,18 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Categories */}
+                    {/* Specialties */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Categorías/Especialidades</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Especialidades</label>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {trainerProfile.categories.map((category, index) => (
+                        {trainerProfile.specialties.map((specialty, index) => (
                           <span
                             key={index}
                             className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full"
                           >
-                            {category}
+                            {specialty}
                             <button
-                              onClick={() => removeCategory(category)}
+                              onClick={() => removeSpecialty(specialty)}
                               className="ml-1 text-blue-600 hover:text-blue-800"
                             >
                               <X className="w-3 h-3" />
@@ -763,32 +924,39 @@ export default function HomePage() {
                         ))}
                       </div>
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Agregar nueva categoría"
+                        <select
                           className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              addCategory(e.currentTarget.value)
-                              e.currentTarget.value = ""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              addSpecialty(e.target.value)
+                              e.target.value = ""
                             }
                           }}
-                        />
-                        <Button
-                          onClick={(e) => {
-                            const input = e.currentTarget.previousElementSibling as HTMLInputElement
-                            addCategory(input.value)
-                            input.value = ""
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700"
                         >
-                          <Plus className="w-4 h-4" />
-                        </Button>
+                          <option value="">Seleccionar especialidad...</option>
+                          {SPECIALTY_OPTIONS.filter(option => !trainerProfile.specialties.includes(option)).map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
+                    {profileSaveError && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 text-sm">{profileSaveError}</p>
+                      </div>
+                    )}
+
                     <div className="pt-4">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">Guardar Cambios</Button>
+                      <Button 
+                        onClick={saveTrainerProfile}
+                        disabled={isSavingProfile}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 disabled:opacity-50"
+                      >
+                        {isSavingProfile ? 'Guardando...' : 'Guardar Cambios'}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -975,7 +1143,15 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-3">Guardar Cambios</Button>
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-3"
+                      onClick={() => {
+                        // Aquí se guardarían los cambios del perfil
+                        setShowTrainerPanel(false)
+                      }}
+                    >
+                      Guardar Cambios
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1102,6 +1278,16 @@ export default function HomePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Trainer Profile Form Modal - DESHABILITADO: Ahora se usa el Panel de Entrenador */}
+      {/* <Dialog open={showTrainerProfileForm} onOpenChange={setShowTrainerProfileForm}>
+        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <TrainerProfileForm
+            onComplete={handleTrainerProfileComplete}
+            onCancel={() => setShowTrainerProfileForm(false)}
+          />
+        </DialogContent>
+      </Dialog> */}
 
       {/* Map Modal */}
       <Dialog open={showMapModal} onOpenChange={setShowMapModal}>

@@ -6,31 +6,24 @@ import { db } from '@/lib/firebase'
 // Tipos de datos
 export interface TrainerProfile {
   id?: string
-  uid?: string // Firebase Auth UID
-  alias: string
-  firstName: string
-  lastName: string
-  dni: string
-  whatsapp: string
-  email: string
-  address: string
-  location: {
-    lat: number
-    lng: number
-    address: string
-  }
-  categories: string[]
-  bio: string
-  description: string
-  profilePhoto: string
-  referencePhotos: string[]
-  rating: number
-  reviews: number
-  experience: string
-  hourlyRate: number
-  isActive: boolean
-  createdAt?: Date
-  updatedAt?: Date
+  uid: string // Firebase Auth UID - OBLIGATORIO
+  alias: string // Nombre artístico (ej: "Coach Ana")
+  name: string // Nombre completo (ej: "Ana García")
+  dni: string // Documento Nacional de Identidad
+  whatsapp: string // Número de WhatsApp
+  address: string // Dirección exacta (ej: "Av. Larco 123, Miraflores")
+  location: string // Ciudad/zona general (ej: "Lima, Perú")
+  generalDescription: string // Descripción corta del entrenador
+  bio: string // Historia completa del entrenador
+  experience: string // Años de experiencia (ej: "8 años")
+  specialties: string[] // Lista combinada de especialidades y certificaciones ["PILATES", "YOGA", "ACSM CERTIFIED"]
+  profileImage: string // URL de foto de perfil
+  referencePhotos: string[] // URLs de fotos adicionales
+  rating: number // Calificación promedio
+  reviewCount: number // Número de reseñas
+  isActive: boolean // Estado activo/inactivo
+  createdAt?: Date // Fecha de creación
+  updatedAt?: Date // Fecha de última actualización
 }
 
 export interface TrainerSchedule {
@@ -150,13 +143,14 @@ export class TrainerService {
     }
   }
 
-  // Buscar entrenadores por categoría
-  static async getTrainersByCategory(category: string): Promise<TrainerProfile[]> {
+  // Obtener entrenadores por especialidad/certificación
+  static async getTrainersBySpecialty(specialty: string): Promise<TrainerProfile[]> {
     try {
       const q = query(
         collection(db, this.trainersCollection),
-        where('categories', 'array-contains', category),
-        where('isActive', '==', true)
+        where('specialties', 'array-contains', specialty),
+        where('isActive', '==', true),
+        orderBy('rating', 'desc')
       )
       const querySnapshot = await getDocs(q)
       return querySnapshot.docs.map(doc => {
@@ -169,7 +163,7 @@ export class TrainerService {
         } as TrainerProfile
       })
     } catch (error) {
-      console.error('Error buscando entrenadores por categoría:', error)
+      console.error('Error obteniendo entrenadores por especialidad:', error)
       throw error
     }
   }
@@ -248,7 +242,7 @@ export class TrainerService {
     }
   }
 
-  // Buscar entrenadores por nombre
+  // Buscar entrenadores por nombre, alias, descripción o especialidades
   static async searchTrainers(searchTerm: string): Promise<TrainerProfile[]> {
     try {
       // Nota: Firestore no soporta búsqueda de texto completo nativamente
@@ -257,10 +251,12 @@ export class TrainerService {
       const searchLower = searchTerm.toLowerCase()
       
       return trainers.filter(trainer => 
-        trainer.firstName.toLowerCase().includes(searchLower) ||
-        trainer.lastName.toLowerCase().includes(searchLower) ||
+        trainer.name.toLowerCase().includes(searchLower) ||
         trainer.alias.toLowerCase().includes(searchLower) ||
-        trainer.categories.some(cat => cat.toLowerCase().includes(searchLower))
+        trainer.generalDescription.toLowerCase().includes(searchLower) ||
+        trainer.bio.toLowerCase().includes(searchLower) ||
+        trainer.location.toLowerCase().includes(searchLower) ||
+        trainer.specialties.some(specialty => specialty.toLowerCase().includes(searchLower))
       )
     } catch (error) {
       console.error('Error buscando entrenadores:', error)
@@ -268,23 +264,18 @@ export class TrainerService {
     }
   }
 
-  // Obtener entrenadores cercanos por ubicación
-  static async getTrainersNearby(latitude: number, longitude: number, radiusKm: number = 10): Promise<TrainerProfile[]> {
+  // Obtener entrenadores por ubicación (búsqueda por texto)
+  static async getTrainersByLocation(locationSearch: string): Promise<TrainerProfile[]> {
     try {
       const trainers = await this.getAllTrainers()
+      const searchLower = locationSearch.toLowerCase()
       
-      return trainers.filter(trainer => {
-        if (!trainer.location?.lat || !trainer.location?.lng) return false
-        
-        const distance = this.calculateDistance(
-          latitude, longitude,
-          trainer.location.lat, trainer.location.lng
-        )
-        
-        return distance <= radiusKm
-      })
+      return trainers.filter(trainer => 
+        trainer.location.toLowerCase().includes(searchLower) ||
+        trainer.address.toLowerCase().includes(searchLower)
+      )
     } catch (error) {
-      console.error('Error obteniendo entrenadores cercanos:', error)
+      console.error('Error obteniendo entrenadores por ubicación:', error)
       throw error
     }
   }
@@ -309,20 +300,4 @@ export class TrainerService {
     }
   }
 
-  // Calcular distancia entre dos puntos (fórmula de Haversine)
-  private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371 // Radio de la Tierra en km
-    const dLat = this.deg2rad(lat2 - lat1)
-    const dLon = this.deg2rad(lon2 - lon1)
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-    return R * c
-  }
-
-  private static deg2rad(deg: number): number {
-    return deg * (Math.PI/180)
-  }
 }
