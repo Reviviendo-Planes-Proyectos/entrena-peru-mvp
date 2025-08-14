@@ -32,6 +32,7 @@ import { useState, useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
 import { useAuth } from "@/hooks/useAuth"
+import { TrainerService, TrainerProfile } from "@/lib/services/trainers"    
 
 export default function HomePage() {
   const { user, loginWithGoogle, logout } = useAuth()
@@ -49,6 +50,9 @@ export default function HomePage() {
   ])
   const [scheduleWeekOffset, setScheduleWeekOffset] = useState(0)
   const [showMapModal, setShowMapModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [filteredTrainers, setFilteredTrainers] = useState<any[]>([])
 
   const [trainerSchedule, setTrainerSchedule] = useState({
     monday: {
@@ -327,9 +331,9 @@ export default function HomePage() {
   }
 
   const categories = [
-    { icon: Dumbbell, name: "Gym", color: "bg-blue-500" },
-    { icon: Heart, name: "Cardio", color: "bg-pink-500" },
-    { icon: Zap, name: "HIIT", color: "bg-yellow-500" },
+    { icon: Dumbbell, name: "Funcional", color: "bg-blue-500" },
+    { icon: Heart, name: "Yoga", color: "bg-pink-500" },
+    { icon: Zap, name: "Crossfit", color: "bg-yellow-500" },
     { icon: Users, name: "Grupal", color: "bg-green-500" },
   ]
 
@@ -420,9 +424,54 @@ export default function HomePage() {
     setShowMapModal(true)
   }
 
-  const trainers = featuredTrainers
+  // Funciones de filtrado y búsqueda
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    filterTrainers(term, selectedCategory)
+  }
 
-  const mockTrainers = featuredTrainers
+  const handleCategoryFilter = (category: string) => {
+    const newCategory = selectedCategory === category ? null : category
+    setSelectedCategory(newCategory)
+    filterTrainers(searchTerm, newCategory)
+  }
+
+  const filterTrainers = (term: string, category: string | null) => {
+    let filtered = featuredTrainers
+
+    // Filtrar por categoría seleccionada
+    if (category) {
+      filtered = filtered.filter(trainer => 
+        trainer.specialty.toLowerCase().includes(category.toLowerCase())
+      )
+    }
+
+    // Filtrar por término de búsqueda
+    if (term.trim()) {
+      filtered = filtered.filter(trainer =>
+        trainer.name.toLowerCase().includes(term.toLowerCase()) ||
+        trainer.specialty.toLowerCase().includes(term.toLowerCase()) ||
+        trainer.location.toLowerCase().includes(term.toLowerCase())
+      )
+    }
+
+    setFilteredTrainers(filtered)
+  }
+
+  const clearSearch = () => {
+    setSearchTerm("")
+    setSelectedCategory(null)
+    setFilteredTrainers(featuredTrainers)
+  }
+
+  // Inicializar filteredTrainers cuando featuredTrainers cambie
+  useEffect(() => {
+    setFilteredTrainers(featuredTrainers)
+  }, [])
+
+  const trainers = filteredTrainers
+
+  const mockTrainers = filteredTrainers
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
@@ -1198,29 +1247,71 @@ export default function HomePage() {
         <div className="relative max-w-md mx-auto mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input
-            placeholder="Buscar por especialidad, ubicación..."
-            className="pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-gray-800 placeholder:text-gray-500"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Buscar por especialidad, entrenador, ubicación"
+            className="pl-10 pr-16 sm:pr-20 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-gray-800 placeholder:text-gray-500"
           />
+          {searchTerm && (
+            <Button
+              onClick={clearSearch}
+              variant="ghost"
+              size="sm"
+              className="absolute right-10 sm:right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
           <Button
             onClick={handleMapClick}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 rounded-lg px-2 sm:px-4"
           >
             <MapPin className="w-4 h-4" />
           </Button>
         </div>
 
+        {/* Indicador de resultados */}
+        {(searchTerm || selectedCategory) && (
+          <div className="text-center mb-4">
+            <p className="text-blue-100 text-sm">
+              {selectedCategory && searchTerm ? (
+                `Mostrando ${filteredTrainers.length} entrenadores de "${selectedCategory}" que coinciden con "${searchTerm}"`
+              ) : selectedCategory ? (
+                `Mostrando ${filteredTrainers.length} entrenadores de "${selectedCategory}"`
+              ) : (
+                `Mostrando ${filteredTrainers.length} entrenadores que coinciden con "${searchTerm}"`
+              )}
+            </p>
+          </div>
+        )}
+
         {/* Categories */}
         <div className="grid grid-cols-4 gap-3 max-w-sm mx-auto">
-          {categories.map((category, index) => (
-            <div key={index} className="text-center">
-              <div
-                className={`w-12 h-12 ${category.color} rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg`}
+          {categories.map((category, index) => {
+            const isSelected = selectedCategory === category.name
+            return (
+              <button
+                key={index}
+                onClick={() => handleCategoryFilter(category.name)}
+                className="text-center transition-all duration-200 hover:scale-105"
               >
-                <category.icon className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xs text-blue-100 font-medium">{category.name}</span>
-            </div>
-          ))}
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg transition-all ${
+                    isSelected 
+                      ? `${category.color} ring-2 ring-white ring-offset-2 ring-offset-blue-600 scale-110` 
+                      : `${category.color} hover:scale-105`
+                  }`}
+                >
+                  <category.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className={`text-xs font-medium transition-colors ${
+                  isSelected ? 'text-white' : 'text-blue-100'
+                }`}>
+                  {category.name}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </section>
 
@@ -1255,7 +1346,19 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-3">
-          {featuredTrainers.map((trainer) => (
+          {filteredTrainers.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-white/80 mb-2">No se encontraron entrenadores</p>
+              <Button 
+                onClick={clearSearch}
+                variant="outline"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          ) : (
+            filteredTrainers.map((trainer) => (
             <div key={trainer.id} className="relative">
               <Link href={`/trainer/${trainer.id}`}>
                 <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
@@ -1320,7 +1423,8 @@ export default function HomePage() {
                 </Button>
               )}
             </div>
-          ))}
+          ))
+        )}
         </div>
 
         <Button className="w-full mt-4 bg-white text-blue-600 hover:bg-blue-50 font-semibold py-3 rounded-xl">
