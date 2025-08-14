@@ -31,8 +31,10 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function HomePage() {
+  const { user, loginWithGoogle, logout } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [userType, setUserType] = useState<"client" | "trainer" | null>(null)
   const [showTrainerPanel, setShowTrainerPanel] = useState(false)
@@ -218,21 +220,38 @@ export default function HomePage() {
     { key: "sunday", name: "Domingo" },
   ]
 
-  const handleLogin = (type: "client" | "trainer") => {
-    setUserType(type)
-    localStorage.setItem("userType", type)
-    setShowLoginModal(false)
-    if (type === "trainer") {
-      setShowTrainerPanel(true)
+  const handleLogin = async (type: "client" | "trainer") => {
+    try {
+      // Establecer el tipo de usuario antes de la autenticación
+      setUserType(type)
+      localStorage.setItem("userType", type)
+      
+      // Autenticar con Google y guardar en Firestore
+      await loginWithGoogle()
+      
+      setShowLoginModal(false)
+      if (type === "trainer") {
+        setShowTrainerPanel(true)
+      }
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error)
+      // Limpiar el tipo de usuario si falla la autenticación
+      setUserType(null)
+      localStorage.removeItem("userType")
     }
   }
 
-  const handleLogout = () => {
-    setUserType(null)
-    localStorage.removeItem("userType")
-    setShowTrainerPanel(false)
-    setShowClientPanel(false)
-    setFavoriteTrainers([])
+  const handleLogout = async () => {
+    try {
+      await logout()
+      setUserType(null)
+      localStorage.removeItem("userType")
+      setShowTrainerPanel(false)
+      setShowClientPanel(false)
+      setFavoriteTrainers([])
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
   }
 
   useEffect(() => {
