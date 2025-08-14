@@ -36,14 +36,14 @@ export function useTrainers() {
     }
   }
 
-  const getTrainersByCategory = async (category: string) => {
+  const getTrainersBySpecialty = async (specialty: string) => {
     try {
       setLoading(true)
       setError(null)
-      const categoryTrainers = await TrainerService.getTrainersByCategory(category)
-      setTrainers(categoryTrainers)
+      const specialtyTrainers = await TrainerService.getTrainersBySpecialty(specialty)
+      setTrainers(specialtyTrainers)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error obteniendo entrenadores por categoría'
+      const errorMessage = err instanceof Error ? err.message : 'Error obteniendo entrenadores por especialidad'
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -121,7 +121,7 @@ export function useTrainers() {
     error,
     fetchTrainers,
     searchTrainers,
-    getTrainersByCategory,
+    getTrainersBySpecialty,
     createTrainer,
     updateTrainer,
     deactivateTrainer,
@@ -296,14 +296,14 @@ export function useTrainersByLocation() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const getTrainersNearby = async (latitude: number, longitude: number, radiusKm: number = 10) => {
+  const getTrainersByLocation = async (locationSearch: string) => {
     try {
       setLoading(true)
       setError(null)
-      const nearbyTrainers = await TrainerService.getTrainersNearby(latitude, longitude, radiusKm)
-      return nearbyTrainers
+      const locationTrainers = await TrainerService.getTrainersByLocation(locationSearch)
+      return locationTrainers
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error obteniendo entrenadores cercanos'
+      const errorMessage = err instanceof Error ? err.message : 'Error obteniendo entrenadores por ubicación'
       setError(errorMessage)
       return []
     } finally {
@@ -314,6 +314,6 @@ export function useTrainersByLocation() {
   return {
     loading,
     error,
-    getTrainersNearby
+    getTrainersByLocation
   }
 }

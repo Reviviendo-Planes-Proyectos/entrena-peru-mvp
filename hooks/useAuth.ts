@@ -46,26 +46,33 @@ export function useAuth() {
       
       // Obtener el tipo de usuario del localStorage
       const userType = localStorage.getItem('userType') as 'client' | 'trainer' | null
+      let isNewTrainer = false
       
       if (userType === 'trainer') {
-        // Si es entrenador, crear documento solo en la colección trainers
+        // Si es entrenador, verificar si ya existe
         const trainerDocRef = doc(db, 'trainers', user.uid)
         const trainerDoc = await getDoc(trainerDocRef)
         
         if (!trainerDoc.exists()) {
+          isNewTrainer = true
+          // Crear documento básico para entrenador nuevo
           await setDoc(trainerDocRef, {
             uid: user.uid,
             email: user.email,
             name: user.displayName || '',
-            phone: '',
+            alias: '',
+            dni: '',
+            whatsapp: '',
+            address: '',
             location: '',
+            generalDescription: '',
             bio: '',
             specialties: [],
             profileImage: user.photoURL || '',
             referencePhotos: [],
             rating: 0,
             reviewCount: 0,
-            isActive: true,
+            isActive: false, // Inactivo hasta completar el perfil
             experience: '',
             certifications: [],
             createdAt: Timestamp.now(),
@@ -93,7 +100,7 @@ export function useAuth() {
         }
       }
       
-      return user
+      return { user, isNewTrainer }
     } catch (error) {
       console.error('Error al iniciar sesión con Google:', error)
       throw error

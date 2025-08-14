@@ -13,7 +13,7 @@ const trainersData = [
     location: 'Lima, Perú',
     generalDescription: 'Especialista en bienestar integral y rehabilitación física',
     bio: 'Instructora certificada de Pilates y Yoga con más de 8 años de experiencia. Especializada en rehabilitación y bienestar integral.',
-    specialties: ['PILATES', 'YOGA', 'STRETCHING'],
+    specialties: ['PILATES', 'YOGA', 'STRETCHING', 'Certificación Internacional de Pilates', 'Instructor de Yoga RYT-200'],
     profileImage: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400',
     referencePhotos: [
       'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
@@ -23,7 +23,6 @@ const trainersData = [
     reviewCount: 47,
     isActive: true,
     experience: '8 años',
-    certifications: ['Certificación Internacional de Pilates', 'Instructor de Yoga RYT-200'],
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   },
@@ -47,7 +46,6 @@ const trainersData = [
     reviewCount: 32,
     isActive: true,
     experience: '8 años',
-    certifications: ['ACSM CERTIFIED', 'FUNCTIONAL TRAINING', 'KARATE'],
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   },
@@ -61,7 +59,7 @@ const trainersData = [
     location: 'Lima, Perú',
     generalDescription: 'Especialista en bailes latinos y cardio divertido',
     bio: 'Instructora de Zumba y bailes latinos. Mis clases son divertidas y llenas de energía para quemar calorías mientras te diviertes.',
-    specialties: ['ZUMBA', 'BAILE LATINO', 'CARDIO'],
+    specialties: ['ZUMBA', 'BAILE LATINO', 'CARDIO', 'Instructor Certificado de Zumba', 'Especialización en Bailes Latinos'],
     profileImage: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400',
     referencePhotos: [
       'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400',
@@ -71,7 +69,6 @@ const trainersData = [
     reviewCount: 28,
     isActive: true,
     experience: '5 años',
-    certifications: ['Instructor Certificado de Zumba', 'Especialización en Bailes Latinos'],
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   },
@@ -85,7 +82,7 @@ const trainersData = [
     location: 'Lima, Perú',
     generalDescription: 'Especialista en musculación y powerlifting avanzado',
     bio: 'Entrenador especializado en musculación y powerlifting. También brindo asesoría nutricional para complementar el entrenamiento.',
-    specialties: ['MUSCULACIÓN', 'POWERLIFTING', 'NUTRICIÓN'],
+    specialties: ['MUSCULACIÓN', 'POWERLIFTING', 'NUTRICIÓN', 'Certificación en Musculación Avanzada', 'Nutricionista Deportivo'],
     profileImage: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400',
     referencePhotos: [
       'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400',
@@ -95,7 +92,6 @@ const trainersData = [
     reviewCount: 41,
     isActive: true,
     experience: '7 años',
-    certifications: ['Certificación en Musculación Avanzada', 'Nutricionista Deportivo'],
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   },
@@ -109,7 +105,7 @@ const trainersData = [
     location: 'Lima, Perú',
     generalDescription: 'Especialista en natación y rehabilitación acuática',
     bio: 'Instructora de natación y aqua aeróbicos. Especializada en rehabilitación acuática y entrenamiento para todas las edades.',
-    specialties: ['NATACIÓN', 'AQUA AERÓBICOS', 'REHABILITACIÓN'],
+    specialties: ['NATACIÓN', 'AQUA AERÓBICOS', 'REHABILITACIÓN', 'Instructor de Natación Certificado', 'Especialización en Rehabilitación Acuática'],
     profileImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
     referencePhotos: [
       'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400',
@@ -119,7 +115,6 @@ const trainersData = [
     reviewCount: 35,
     isActive: true,
     experience: '9 años',
-    certifications: ['Instructor de Natación Certificado', 'Especialización en Rehabilitación Acuática'],
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   }
