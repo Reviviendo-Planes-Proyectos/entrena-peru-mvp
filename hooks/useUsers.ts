@@ -69,7 +69,7 @@ export function useUsers() {
       setUsers(prev => 
         prev.map(user => 
           user.id === userId 
-            ? { ...user, ...updates, updatedAt: new Date() }
+            ? { ...user, ...updates }
             : user
         )
       )
@@ -189,7 +189,7 @@ export function useCurrentUserProfile() {
       setLoading(true)
       setError(null)
       await UserService.updateUserProfile(profile.id, updates)
-      setProfile(prev => prev ? { ...prev, ...updates, updatedAt: new Date() } : null)
+      setProfile(prev => prev ? { ...prev, ...updates } : null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error actualizando perfil'
       setError(errorMessage)

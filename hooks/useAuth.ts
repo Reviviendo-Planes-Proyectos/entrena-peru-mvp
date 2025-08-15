@@ -59,7 +59,7 @@ export function useAuth() {
           await setDoc(trainerDocRef, {
             uid: user.uid,
             email: user.email,
-            name: user.displayName || '',
+            gmailDisplayName: user.displayName || '',
             alias: '',
             dni: '',
             whatsapp: '',
@@ -75,8 +75,7 @@ export function useAuth() {
             isActive: false, // Inactivo hasta completar el perfil
             experience: '',
             certifications: [],
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now()
+            createdAt: Timestamp.now()
           })
         }
       } else if (userType === 'client') {
@@ -88,14 +87,14 @@ export function useAuth() {
           await setDoc(userDocRef, {
             uid: user.uid,
             email: user.email,
-            name: user.displayName || '',
+            gmailDisplayName: user.displayName || '',
+            photoURL: user.photoURL || '',
             phone: '',
             age: null,
             fitnessGoals: [],
             fitnessLevel: 'Principiante',
             isActive: true,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now()
+            createdAt: Timestamp.now()
           })
         }
       }
