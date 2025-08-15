@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      // Permitir lectura y escritura solo a usuarios autenticados
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para la colección de entrenadores
+    match /trainers/{trainerId} {
+      // Permitir lectura a todos, escritura solo a usuarios autenticados
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Reglas para la colección de reservas
+    match /bookings/{bookingId} {
+      // Permitir lectura y escritura solo a usuarios autenticados
+      allow read, write: if request.auth != null;
+    }
+    
+    // Reglas para preferencias de usuario
+    match /userPreferences/{userId} {
+      // Permitir lectura y escritura solo al propietario
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

@@ -34,6 +34,7 @@ import L from "leaflet"
 import { useAuth } from "@/hooks/useAuth"
 import { TrainerService, TrainerProfile } from "@/lib/services/trainers"
 import { TrainerProfileForm } from "@/components/TrainerProfileForm"
+import { UserProfileForm } from "@/components/UserProfileForm"
 
 export default function HomePage() {
   const { user, loginWithGoogle, logout } = useAuth()
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [showTrainerPanel, setShowTrainerPanel] = useState(false)
   const [showClientPanel, setShowClientPanel] = useState(false)
   const [showTrainerProfileForm, setShowTrainerProfileForm] = useState(false)
+  const [showUserProfileForm, setShowUserProfileForm] = useState(false)
   const [activeTrainerMenu, setActiveTrainerMenu] = useState<"profile" | "schedule" | "rates">("profile")
   const [favoriteTrainers, setFavoriteTrainers] = useState<number[]>([])
   const [rateType, setRateType] = useState<"weekly" | "monthly">("weekly")
@@ -274,6 +276,9 @@ export default function HomePage() {
       if (type === "trainer") {
         // Siempre mostrar el Panel de Entrenador (ahora tiene funcionalidad completa)
         setShowTrainerPanel(true)
+      } else if (type === "client") {
+        // Mostrar el modal de registro de usuario
+        setShowUserProfileForm(true)
       }
     } catch (error) {
       console.error('Error al iniciar sesión:', error)
@@ -291,6 +296,7 @@ export default function HomePage() {
       setShowTrainerPanel(false)
       setShowClientPanel(false)
       setShowTrainerProfileForm(false)
+      setShowUserProfileForm(false)
       setFavoriteTrainers([])
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
@@ -300,6 +306,11 @@ export default function HomePage() {
   const handleTrainerProfileComplete = () => {
     setShowTrainerProfileForm(false)
     setShowTrainerPanel(true)
+  }
+
+  const handleUserProfileComplete = () => {
+    setShowUserProfileForm(false)
+    // El usuario puede empezar a usar la plataforma
   }
 
   useEffect(() => {
@@ -1288,6 +1299,14 @@ export default function HomePage() {
           />
         </DialogContent>
       </Dialog> */}
+
+      {/* User Profile Form Modal */}
+      {showUserProfileForm && (
+        <UserProfileForm
+          onComplete={handleUserProfileComplete}
+          onCancel={() => setShowUserProfileForm(false)}
+        />
+      )}
 
       {/* Map Modal */}
       <Dialog open={showMapModal} onOpenChange={setShowMapModal}>

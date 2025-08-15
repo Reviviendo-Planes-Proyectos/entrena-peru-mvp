@@ -58,7 +58,7 @@ export function TrainerProfileForm({ onComplete, onCancel }: TrainerProfileFormP
   const [newSpecialty, setNewSpecialty] = useState("")
 
   const [formData, setFormData] = useState({
-    name: user?.displayName || '',
+    gmailDisplayName: user?.displayName || '',
     alias: '',
     dni: '',
     whatsapp: '',
@@ -147,8 +147,7 @@ export function TrainerProfileForm({ onComplete, onCancel }: TrainerProfileFormP
       // Actualizar el perfil del entrenador
       await TrainerService.updateTrainer(user.uid, {
         ...formData,
-        isActive: true, // Activar el entrenador una vez completado el perfil
-        updatedAt: new Date()
+        isActive: true // Activar el entrenador una vez completado el perfil
       })
 
       toast({
@@ -239,13 +238,14 @@ export function TrainerProfileForm({ onComplete, onCancel }: TrainerProfileFormP
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombres *
+                Nombre de Gmail
               </label>
               <Input
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                value={formData.gmailDisplayName}
+                onChange={(e) => handleInputChange('gmailDisplayName', e.target.value)}
                 placeholder="Carlos"
                 className="w-full"
+                disabled
               />
             </div>
 

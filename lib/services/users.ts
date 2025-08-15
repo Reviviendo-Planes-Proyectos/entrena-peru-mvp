@@ -10,7 +10,10 @@ export interface UserProfile {
   email: string
   firstName: string
   lastName: string
+  gmailDisplayName?: string
+  photoURL?: string
   phone?: string
+  age?: number
   dateOfBirth?: Date
   gender?: 'male' | 'female' | 'other'
   address?: {
@@ -28,7 +31,7 @@ export interface UserProfile {
   fitnessGoals?: string[]
   medicalConditions?: string[]
   preferredTrainingTime?: 'morning' | 'afternoon' | 'evening'
-  experience?: 'beginner' | 'intermediate' | 'advanced'
+  fitnessLevel?: string
   avatar?: string
   isActive: boolean
   createdAt?: Date
@@ -66,6 +69,16 @@ export class UserService {
   // Crear perfil de usuario
   static async createUserProfile(profile: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
+      // Verificar si ya existe un usuario con este UID
+      const existingUser = await this.getUserByUID(profile.uid)
+      if (existingUser) {
+        console.log('Usuario ya existe, actualizando información:', existingUser.id)
+        // Actualizar el usuario existente con la nueva información
+        await this.updateUserProfile(existingUser.id!, profile)
+        return existingUser.id!
+      }
+
+      // Si no existe, crear nuevo usuario
       const docRef = await addDoc(collection(db, this.usersCollection), {
         ...profile,
         dateOfBirth: profile.dateOfBirth ? Timestamp.fromDate(profile.dateOfBirth) : null,
